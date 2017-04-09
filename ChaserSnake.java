@@ -36,7 +36,7 @@ public class ChaserSnake extends Snake
   
   public void movement(int direction,Snake s,boolean cpu)
   {
-    Dot d = new Dot(s.getX(),s.getY());
+    Dot d = new Dot(s.dot[(int)(Math.random())*s.dot.length]);
     super.movement(direction,d,cpu);
   }
 }

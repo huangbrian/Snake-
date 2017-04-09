@@ -10,14 +10,16 @@ public class Game extends JPanel implements KeyListener, ActionListener
   private int seconds = 0;
   private int minutes = 2;
   private JButton start;
+  private JButton quit;
+  private JButton rules;
+  private JButton endSession;
   private Snake s;
   private ChaserSnake c;
   private int dir1 = 0;
   private int dir2 = 0;
   private int width, height = 0;
-  boolean pPress = false;
+  private boolean pPress = false;
   private boolean snakePressedOnce, chaserPressedOnce = false;
-  boolean o,m,n,o2,m2;
   int a = 0;
   Dot d;
   
@@ -40,10 +42,16 @@ public class Game extends JPanel implements KeyListener, ActionListener
     t = new Timer(48,new RefreshListener());
     elapsed = new Timer(1000,new Elapsed());
     start = new JButton("Start (default 2p setting)");
+    quit = new JButton("Exit Game");
     cpuOff = new JButton("2p");
-    
-    start.addActionListener(this);
+    rules = new JButton("Rules and Controls");
+    endSession = new JButton("Exit Round (no contest)");
+
+    start.addActionListener(this);    
+    quit.addActionListener(this);
     cpuOff.addActionListener(this);
+    rules.addActionListener(this);
+    endSession.addActionListener(this);
     
     cpuOn = new JMenuBar();
     cpuOps = new JMenu("1p Options");
@@ -82,6 +90,11 @@ public class Game extends JPanel implements KeyListener, ActionListener
     add(cpuOn);
     add(cpuOff);
     add(timeOptions);
+    add(quit);
+    add(rules);
+    add(endSession);
+    
+    endSession.setVisible(false);
     
     addKeyListener(this);
     
@@ -94,8 +107,8 @@ public class Game extends JPanel implements KeyListener, ActionListener
   {
     super.paintComponent(g);
     
-    g.drawString("Snake score:"+s.n,800,50);
-    g.drawString("Chaser score:"+c.n,900,50);
+    g.drawString("Snake score:"+(s.n-3),800,50);
+    g.drawString("Chaser score:"+(c.n-3),900,50);
     if(time >= 0)
     {
       if(seconds >= 10)
@@ -108,6 +121,9 @@ public class Game extends JPanel implements KeyListener, ActionListener
     g.setColor(Color.RED);
     c.paint(g);
     d.paint(g);
+    g.setColor(Color.CYAN);
+    g.fillRect(0,height/10*10+10,width/10*10+10,height+10);
+    g.fillRect(width+10,0,width+20,height+20);
   }
   
   public void actionPerformed(ActionEvent evt)
@@ -123,12 +139,48 @@ public class Game extends JPanel implements KeyListener, ActionListener
       cpuOff.setVisible(false);
       cpuOn.setVisible(false);
       timeOptions.setVisible(false);
+      quit.setVisible(false);
+      rules.setVisible(false);
+    }
+    
+    if(evt.getSource() == quit)
+    {
+      System.exit(2);
     }
     
     if(evt.getSource() == cpuOff)
     {
       sCom = false;
       cCom = false;
+    }
+    
+    if(evt.getSource() == rules)
+    {
+      JFrame instruct = new JFrame();
+      instruct.setVisible(true);
+      instruct.setSize(500,500);
+      instruct.setLocation(100,50);
+      JTextArea instructions = new JTextArea
+        ("Controls:\n"+
+         "up, left, down, right for snake(green)."
+           +"W A S D for chaser(red)\n"
+           +"Click 'p' to pause the game.\n\n"
+           +"Rules:\n"
+           +"Snake(green) eats the orange dot to grow and add to score\n"
+           +"while the Chaser(red) eats any dot on the Snake to grow and add to score."
+           +"\n\nNeither Snake now Chaser may cross outside of the borders of the screen."
+           +"\nBorders are the edges of the screen and the cyan area."
+           +"\n\nThe Snake also cannot run into any part to the Chaser.\n\n"
+           +"Once the Snake gets over 42 points, the Snake wins.\n"
+           +"Other ways to win are forcing the other player to crash into a border.\n\n"
+           +"NOTE: Rules are constantly being changed for rebalancing :-)");
+      instruct.setContentPane(instructions);
+    }
+    
+    if(evt.getSource() == endSession)
+    {
+      JOptionPane.showMessageDialog(new JDialog(),"No Contest. Click 'Start' for new game");
+      resetAfterGame();
     }
   }
   
@@ -192,14 +244,6 @@ public class Game extends JPanel implements KeyListener, ActionListener
     {
       snakePressedOnce = false;
       chaserPressedOnce = false;
-      if(n&&o&&m)
-      {
-        c.n+=5;
-        o=m=n=o2=m2=false;
-      }
-      
-      s.movement(dir1,d,sCom);
-      c.movement(dir2,s,cCom);
       
       if(s.eat(d.getX(),d.getY()))
       {
@@ -220,13 +264,18 @@ public class Game extends JPanel implements KeyListener, ActionListener
           c.n++;
           s.n--;
           
-          if(c.n>=36)
+          if(c.n>45)
           {
             s.gameOver = true;
           }
           
           break;
         }
+      }
+      for(int i = 0;i < c.n;i++)
+      {
+        if(s.getDot(0).equals(c.getDot(i)))
+          s.gameOver = true;
       }
       
       if(s.gameOver||c.gameOver)
@@ -244,25 +293,33 @@ public class Game extends JPanel implements KeyListener, ActionListener
           JOptionPane.showMessageDialog(new JDialog(),"Snake Wins! Click 'Start' for new game");
           c.gameOver = false;
         }
-        
-        s = new Snake(500,300,width,height);
-        c = new ChaserSnake(800,600,width,height);
-        start.setVisible(true);
-        cpuOff.setVisible(true);
-        cpuOn.setVisible(true);
-        timeOptions.setVisible(true);
-        time = 120;
-        minutes = time/60;
-        seconds = time - 60*minutes;
-        dir1 = 0;
-        dir2 = 0;
-        
-        options.setText("Total Time (default 2 minutes)");
+        resetAfterGame();
       }
+      
+      s.movement(dir1,d,sCom);
+      c.movement(dir2,s,cCom);
       repaint();
     }
   }
-  
+  public void resetAfterGame()
+  {
+    s = new Snake(500,300,width,height);
+    c = new ChaserSnake(800,600,width,height);
+    start.setVisible(true);
+    cpuOff.setVisible(true);
+    cpuOn.setVisible(true);
+    timeOptions.setVisible(true);
+    quit.setVisible(true);
+    rules.setVisible(true);
+    endSession.setVisible(false);
+    time = 120;
+    minutes = time/60;
+    seconds = time - 60*minutes;
+    dir1 = 0;
+    dir2 = 0;
+    
+    options.setText("Total Time (default 2 minutes)");
+  }
   class Elapsed implements ActionListener
   {
     public Elapsed(){}
@@ -337,18 +394,25 @@ public class Game extends JPanel implements KeyListener, ActionListener
 //      which = true;
   }
   public void keyReleased(KeyEvent evt)
-  {
-  }
+  {}
   public void keyTyped(KeyEvent evt)
   {
-    if(evt.getKeyChar()=='p'&&pPress)
+    if(evt.getKeyChar()=='p'&&pPress&&!start.isVisible())
     {
       t.start();
+      elapsed.start();
+      quit.setVisible(false);
+      rules.setVisible(false);
+      endSession.setVisible(false);
       pPress = false;
     }
-    else if(evt.getKeyChar() == 'p')
+    else if(evt.getKeyChar() == 'p'&&!start.isVisible())
     {
       t.stop();
+      elapsed.stop();
+      quit.setVisible(true);
+      rules.setVisible(true);
+      endSession.setVisible(true);
       pPress = true;
     }
 //    if(evt.getKeyChar() == 'o')

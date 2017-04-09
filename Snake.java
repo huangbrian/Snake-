@@ -4,7 +4,7 @@ import javax.swing.*;
 public class Snake
 {
   int n;
-  Dot[] dot = new Dot[48];
+  Dot[] dot = new Dot[52];
   int width, height = 0;
   boolean start = true;
   boolean gameOver = false;
@@ -14,6 +14,15 @@ public class Snake
   private boolean u = false;
   private boolean dn = false;
   
+  /**
+   * initial constructor for Snake at beginning of game
+   * takes screen width and height for collision handling
+   * 
+   * @param startX the start x coordinate
+   * @param startY the start y coordinate
+   * @param w screen width
+   * @param h screen height
+   */
   public Snake(int startX,int startY,int w, int h)
   {
     n = 3;
@@ -36,6 +45,11 @@ public class Snake
     }
   }
   
+  /**
+   * paint method for snake
+   * 
+   * @param g graphics for GUI
+   */
   public void paint(Graphics g)
   {
     for(int i = 0; i < n; i++)
@@ -46,6 +60,14 @@ public class Snake
     start = false;
   }
   
+  /**
+   * moves snake in direction inputted
+   * also checks for collisions
+   * 
+   * @param direction inputted direction from key listener
+   * @param d dot which snake can eat if coordinates match
+   * @param cpu determines if the snake movement is self-controlled
+   */
   public void movement(int direction,Dot d,boolean cpu)
   {
     Dot[] temp = new Dot[48];
@@ -54,9 +76,8 @@ public class Snake
     {
       if(temp[i]==null)
       {
-        temp[i] = new Dot(temp[n-1]);
+        temp[i] = new Dot(dot[0]);
       }
-  
       dot[i+1] = new Dot(temp[i]);
     }
     if(!cpu)
@@ -65,50 +86,33 @@ public class Snake
       {
         case 1:
         {
-          if(dot[0].getX()>0)
-          {
-            dot[0].setX(dot[0].getX()-10);
-          }
-          else
-            gameOver = true;
+          dot[0].setX(dot[0].getX()-10);
           break;
         }
         case 2:
         {
-          if(dot[0].getX()<width)
-          {
-            dot[0].setX(dot[0].getX()+10);
-          }
-          else
-            gameOver = true;
+          dot[0].setX(dot[0].getX()+10);
           break;
         }
         case 3:
         {
-          if(dot[0].getY()>0)
-          {
-            dot[0].setY(dot[0].getY()-10);
-          }
-          else
-            gameOver = true;
+          dot[0].setY(dot[0].getY()-10);
           break;
         }
         case 4:
         {
-          if(dot[0].getY()<height)
-          {
-            dot[0].setY(dot[0].getY()+10);
-          }
-          else
-            gameOver = true;
+          dot[0].setY(dot[0].getY()+10);
           break;
         }
         default:
           break;
       }
+      
+      if(dot[0].getX()<0||dot[0].getX()>width||dot[0].getY()<0||dot[0].getY()>height)
+           gameOver = true;
     }
     else
-      reactTo(d,null);
+      reactTo(d);
     
     for(int i = 3;i < n;i++)
     {
@@ -124,7 +128,7 @@ public class Snake
   
   public boolean checkWin()
   {
-    if(n >= 36)
+    if(n > 45)
     {
       return true;
     }
@@ -138,7 +142,7 @@ public class Snake
    * 
    * @param d Dot the Snake is to eat
    */
-  public void reactTo(Dot d, ChaserSnake chaser)
+  public void reactTo(Dot d)
   {
     //int xOffset;
     //int yOffset;
@@ -184,13 +188,6 @@ public class Snake
       r = false;
       dn = false;
     }
-    //if (r.contains(x[0] - 5, y[0] - 5 + yOffset, 10, 10))
-    //y[0] = y[0] + yOffset;
-    //}
-    for(int i = n;i > 0;i--)
-    {
-      dot[i] = dot[i-1];
-    }
     
     if(!(dot[0].getX()>0||dot[0].getX()<width||dot[0].getY()>0||dot[0].getY()<height))
     {
@@ -216,7 +213,13 @@ public class Snake
   }
   
   public void grow()
-  {n+=5;}
+  {
+    n+=6;
+    for(int i=n-6;i<n;i++)
+    {
+      dot[i] = new Dot(dot[n-6]);
+    }
+  }
   /**
    * @param which dot in the snake
    */

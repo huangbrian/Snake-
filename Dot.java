@@ -25,7 +25,7 @@ public class Dot
   
   public void paint(Graphics g)
   {
-    g.setColor(Color.BLUE);
+    g.setColor(Color.ORANGE);
     g.fillOval(x,y,10,10);
   }
   
